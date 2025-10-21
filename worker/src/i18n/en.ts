@@ -57,7 +57,8 @@ export const telegram: TelegramMessages = {
         unbind: "Unbind email address, use /unbind <email_address>",
         delete: "Delete email address, use /delete <email_address>",
         mails: "View emails, use /mails <email_address>, defaults to first address if not specified",
-        cleaninvalidaddress: "Clean invalid addresses, use /cleaninvalidaddress"
+        cleaninvalidaddress: "Clean invalid addresses, use /cleaninvalidaddress",
+        admin: "Admin commands: stats, users, broadcast, settings"
     },
     unableGetUserInfo: "Unable to get user information",
     noPermission: "You don't have permission to use this bot",
@@ -106,7 +107,20 @@ export const telegram: TelegramMessages = {
     nameBlocked: "Name is blocked",
     invalidCredential: "Invalid credential",
     invalidJwt: "Invalid JWT",
-    addressNotYours: "This address does not belong to you"
+    addressNotYours: "This address does not belong to you",
+    adminOnly: "⛔ Admin access required",
+    adminStats: "📊 System Statistics:\n",
+    adminUsers: "👥 User List:\n",
+    adminBroadcast: "📢 Broadcast message to all users",
+    adminSettings: "⚙️ Bot Settings:\n",
+    totalUsers: "Total Users: ",
+    totalAddresses: "Total Addresses: ",
+    totalEmails: "Total Emails: ",
+    userList: "User ID: ",
+    broadcastSent: "✅ Broadcast sent to {count} users",
+    broadcastFailed: "❌ Broadcast failed: ",
+    settingsInfo: "Settings updated. Use API to modify.",
+    invalidAdminCommand: "Invalid admin command. Use: stats, users, broadcast, settings"
 }
 
 export default messages;

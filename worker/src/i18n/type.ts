@@ -56,6 +56,7 @@ export type TelegramMessages = {
         delete: string
         mails: string
         cleaninvalidaddress: string
+        admin: string
     }
     unableGetUserInfo: string
     noPermission: string
@@ -105,4 +106,17 @@ export type TelegramMessages = {
     invalidCredential: string
     invalidJwt: string
     addressNotYours: string
+    adminOnly: string
+    adminStats: string
+    adminUsers: string
+    adminBroadcast: string
+    adminSettings: string
+    totalUsers: string
+    totalAddresses: string
+    totalEmails: string
+    userList: string
+    broadcastSent: string
+    broadcastFailed: string
+    settingsInfo: string
+    invalidAdminCommand: string
 }

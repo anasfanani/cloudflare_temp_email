@@ -57,7 +57,8 @@ export const telegram: TelegramMessages = {
         unbind: "解绑邮箱地址, 请输入 /unbind <邮箱地址>",
         delete: "删除邮箱地址, 请输入 /delete <邮箱地址>",
         mails: "查看邮件, 请输入 /mails <邮箱地址>, 不输入地址默认查看第一个地址",
-        cleaninvalidaddress: "清理无效地址, 请输入 /cleaninvalidaddress"
+        cleaninvalidaddress: "清理无效地址, 请输入 /cleaninvalidaddress",
+        admin: "管理员命令: stats, users, broadcast, settings"
     },
     unableGetUserInfo: "无法获取用户信息",
     noPermission: "您没有权限使用此机器人",
@@ -106,7 +107,20 @@ export const telegram: TelegramMessages = {
     nameBlocked: "名称已被屏蔽",
     invalidCredential: "无效凭证",
     invalidJwt: "无效凭证",
-    addressNotYours: "此地址不属于您"
+    addressNotYours: "此地址不属于您",
+    adminOnly: "⛔ 需要管理员权限",
+    adminStats: "📊 系统统计:\n",
+    adminUsers: "👥 用户列表:\n",
+    adminBroadcast: "📢 向所有用户广播消息",
+    adminSettings: "⚙️ 机器人设置:\n",
+    totalUsers: "总用户数: ",
+    totalAddresses: "总地址数: ",
+    totalEmails: "总邮件数: ",
+    userList: "用户ID: ",
+    broadcastSent: "✅ 已向 {count} 个用户发送广播",
+    broadcastFailed: "❌ 广播失败: ",
+    settingsInfo: "设置已更新。使用 API 修改。",
+    invalidAdminCommand: "无效的管理员命令。使用: stats, users, broadcast, settings"
 }
 
 export default messages;

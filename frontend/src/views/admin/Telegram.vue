@@ -24,6 +24,8 @@ const { t } = useI18n({
             enableGlobalMailPush: 'Enable Global Mail Push(Manually input telegram Chat ID)',
             globalMailPushList: 'Global Mail Push Chat ID List',
             globalMailPushListTip: 'Support chat_id of private chat/group/channel. You can send a message to your bot, then visit this link to see chat_id, https://api.telegram.org/bot<Replace with your BOT TOKEN>/getUpdates',
+            adminList: 'Admin List (Telegram Chat IDs)',
+            adminListTip: 'Users in this list can use /admin commands in the bot',
         },
         zh: {
             init: '初始化',
@@ -38,6 +40,8 @@ const { t } = useI18n({
             enableGlobalMailPush: '启用全局邮件推送(手动输入邮箱管理员的 telegram Chat ID, 回车增加)',
             globalMailPushList: '全局邮件推送 Chat ID 列表',
             globalMailPushListTip: '支持对话/群组/频道的 Chat ID, 您可以发送一条消息给您的机器人，然后访问此链接来查看 chat_id, https://api.telegram.org/bot<这里替换成您的 BOT TOKEN>/getUpdates',
+            adminList: '管理员列表 (Telegram Chat ID)',
+            adminListTip: '此列表中的用户可以在机器人中使用 /admin 命令',
         }
     }
 });
@@ -73,20 +77,32 @@ class TelegramSettings {
     miniAppUrl: string;
     enableGlobalMailPush: boolean;
     globalMailPushList: string[];
+    adminList: string[];
+    allowPrivateChat: boolean;
+    allowGroupChat: boolean;
+    allowSuperGroupChat: boolean;
 
     constructor(
         enableAllowList: boolean, allowList: string[], miniAppUrl: string,
-        enableGlobalMailPush: boolean, globalMailPushList: string[]
+        enableGlobalMailPush: boolean, globalMailPushList: string[],
+        adminList: string[] = [],
+        allowPrivateChat: boolean = true,
+        allowGroupChat: boolean = false,
+        allowSuperGroupChat: boolean = false
     ) {
         this.enableAllowList = enableAllowList;
         this.allowList = allowList;
         this.miniAppUrl = miniAppUrl;
         this.enableGlobalMailPush = enableGlobalMailPush;
         this.globalMailPushList = globalMailPushList;
+        this.adminList = adminList;
+        this.allowPrivateChat = allowPrivateChat;
+        this.allowGroupChat = allowGroupChat;
+        this.allowSuperGroupChat = allowSuperGroupChat;
     }
 }
 
-const settings = ref(new TelegramSettings(false, [], '', false, []))
+const settings = ref(new TelegramSettings(false, [], '', false, [], [], true, false, false))
 
 const getSettings = async () => {
     try {
@@ -145,6 +161,22 @@ onMounted(async () => {
                     </n-input-group>
                 </n-form-item-row>
                 <br />
+                <n-form-item-row :label="t('adminList')">
+                    <n-select v-model:value="settings.adminList" filterable multiple tag
+                        :placeholder="t('adminList')">
+                        <template #empty>
+                            <n-text depth="3">
+                                {{ t('manualInputPrompt') }}
+                            </n-text>
+                        </template>
+                    </n-select>
+                    <template #feedback>
+                        <n-text depth="3">
+                            {{ t('adminListTip') }}
+                        </n-text>
+                    </template>
+                </n-form-item-row>
+                <br />
                 <n-form-item-row :label="t('enableGlobalMailPush')">
                     <n-input-group>
                         <n-checkbox v-model:checked="settings.enableGlobalMailPush" style="width: 20%;">
@@ -168,6 +200,25 @@ onMounted(async () => {
                 <br />
                 <n-form-item-row :label="t('miniAppUrl')">
                     <n-input v-model:value="settings.miniAppUrl"></n-input>
+                </n-form-item-row>
+                <br />
+                <n-form-item-row label="Allowed Chat Types">
+                    <n-space vertical>
+                        <n-checkbox v-model:checked="settings.allowPrivateChat">
+                            👤 Private Chats
+                        </n-checkbox>
+                        <n-checkbox v-model:checked="settings.allowGroupChat">
+                            👥 Group Chats
+                        </n-checkbox>
+                        <n-checkbox v-model:checked="settings.allowSuperGroupChat">
+                            👥 Supergroup Chats
+                        </n-checkbox>
+                    </n-space>
+                    <template #feedback>
+                        <n-text depth="3">
+                            Control which chat types can use the bot. Admins bypass these restrictions.
+                        </n-text>
+                    </template>
                 </n-form-item-row>
             </n-card>
             <pre v-if="status.fetched">{{ JSON.stringify(status, null, 2) }}</pre>

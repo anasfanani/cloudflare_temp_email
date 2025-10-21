@@ -7,22 +7,34 @@ export class TelegramSettings {
     miniAppUrl: string;
     enableGlobalMailPush: boolean;
     globalMailPushList: string[];
+    adminList: string[];
+    allowPrivateChat: boolean;
+    allowGroupChat: boolean;
+    allowSuperGroupChat: boolean;
 
     constructor(
         enableAllowList: boolean, allowList: string[], miniAppUrl: string,
-        enableGlobalMailPush: boolean, globalMailPushList: string[]
+        enableGlobalMailPush: boolean, globalMailPushList: string[],
+        adminList: string[] = [],
+        allowPrivateChat: boolean = true,
+        allowGroupChat: boolean = false,
+        allowSuperGroupChat: boolean = false
     ) {
         this.enableAllowList = enableAllowList;
         this.allowList = allowList;
         this.miniAppUrl = miniAppUrl;
         this.enableGlobalMailPush = enableGlobalMailPush;
         this.globalMailPushList = globalMailPushList;
+        this.adminList = adminList;
+        this.allowPrivateChat = allowPrivateChat;
+        this.allowGroupChat = allowGroupChat;
+        this.allowSuperGroupChat = allowSuperGroupChat;
     }
 }
 
 async function getTelegramSettings(c: Context<HonoCustomType>): Promise<Response> {
     const settings = await c.env.KV.get<TelegramSettings>(CONSTANTS.TG_KV_SETTINGS_KEY, "json");
-    return c.json(settings || new TelegramSettings(false, [], "", false, []));
+    return c.json(settings || new TelegramSettings(false, [], "", false, [], [], true, false, false));
 }
 
 
