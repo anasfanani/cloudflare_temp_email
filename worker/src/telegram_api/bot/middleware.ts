@@ -23,14 +23,8 @@ export async function setupMiddleware(bot: any, c: Context<HonoCustomType>) {
         
         // Check chat type restrictions (admins bypass this)
         if (!isAdmin) {
-            if (chatType === 'private' && settings?.allowPrivateChat === false) {
-                return await ctx.reply("❌ Private chats are disabled for this bot");
-            }
-            if (chatType === 'group' && settings?.allowGroupChat === false) {
-                return await ctx.reply("❌ Group chats are disabled for this bot");
-            }
-            if (chatType === 'supergroup' && settings?.allowSuperGroupChat === false) {
-                return await ctx.reply("❌ Supergroup chats are disabled for this bot");
+            if (chatType !== 'private') {
+                return await ctx.reply("❌ Only private chats are supported");
             }
         }
         

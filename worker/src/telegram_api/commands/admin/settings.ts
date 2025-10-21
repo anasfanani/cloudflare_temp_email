@@ -9,11 +9,7 @@ export async function handleAdminSettings(ctx: TgContext, c: Context<HonoCustomT
         + `Allow List: ${settings?.enableAllowList ? '✅ Enabled' : '❌ Disabled'} (${settings?.allowList?.length || 0} users)\n`
         + `Admin List: ${settings?.adminList?.length || 0} admins\n`
         + `Global Mail Push: ${settings?.enableGlobalMailPush ? '✅ Enabled' : '❌ Disabled'} (${settings?.globalMailPushList?.length || 0} users)\n`
-        + `Mini App URL: ${settings?.miniAppUrl ? '✅ Set' : '❌ Not set'}\n\n`
-        + `Chat Types:\n`
-        + `👤 Private: ${settings?.allowPrivateChat !== false ? '✅' : '❌'}\n`
-        + `👥 Group: ${settings?.allowGroupChat ? '✅' : '❌'}\n`
-        + `👥 Supergroup: ${settings?.allowSuperGroupChat ? '✅' : '❌'}\n`;
+        + `Mini App URL: ${settings?.miniAppUrl ? '✅ Set' : '❌ Not set'}\n`;
     
     const buttons = [
         [
@@ -26,22 +22,6 @@ export async function handleAdminSettings(ctx: TgContext, c: Context<HonoCustomT
             Markup.button.callback(
                 settings?.enableGlobalMailPush ? '🔕 Disable Mail Push' : '🔔 Enable Mail Push',
                 'setting_toggle_mailpush'
-            )
-        ],
-        [
-            Markup.button.callback(
-                settings?.allowPrivateChat !== false ? '👤 Disable Private' : '👤 Enable Private',
-                'setting_toggle_private'
-            ),
-            Markup.button.callback(
-                settings?.allowGroupChat ? '👥 Disable Group' : '👥 Enable Group',
-                'setting_toggle_group'
-            )
-        ],
-        [
-            Markup.button.callback(
-                settings?.allowSuperGroupChat ? '👥 Disable Supergroup' : '👥 Enable Supergroup',
-                'setting_toggle_supergroup'
             )
         ],
         [

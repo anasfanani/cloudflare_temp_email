@@ -135,24 +135,6 @@ export async function handleSettingCallbacks(ctx: TgContext, c: Context<HonoCust
             await handleAdminSettings(ctx, c);
             await ctx.answerCbQuery(`Mail Push ${settings.enableGlobalMailPush ? 'Enabled' : 'Disabled'}`);
             break;
-        case "toggle_private":
-            settings.allowPrivateChat = settings.allowPrivateChat === false ? true : false;
-            await c.env.KV.put(CONSTANTS.TG_KV_SETTINGS_KEY, JSON.stringify(settings));
-            await handleAdminSettings(ctx, c);
-            await ctx.answerCbQuery(`Private Chat ${settings.allowPrivateChat !== false ? 'Enabled' : 'Disabled'}`);
-            break;
-        case "toggle_group":
-            settings.allowGroupChat = !settings.allowGroupChat;
-            await c.env.KV.put(CONSTANTS.TG_KV_SETTINGS_KEY, JSON.stringify(settings));
-            await handleAdminSettings(ctx, c);
-            await ctx.answerCbQuery(`Group Chat ${settings.allowGroupChat ? 'Enabled' : 'Disabled'}`);
-            break;
-        case "toggle_supergroup":
-            settings.allowSuperGroupChat = !settings.allowSuperGroupChat;
-            await c.env.KV.put(CONSTANTS.TG_KV_SETTINGS_KEY, JSON.stringify(settings));
-            await handleAdminSettings(ctx, c);
-            await ctx.answerCbQuery(`Supergroup Chat ${settings.allowSuperGroupChat ? 'Enabled' : 'Disabled'}`);
-            break;
         case "manage_allowlist": {
             const allowListText = settings?.allowList?.length 
                 ? settings.allowList.map(id => `• ${id}`).join('\n')
@@ -180,18 +162,61 @@ export async function handleSettingCallbacks(ctx: TgContext, c: Context<HonoCust
             break;
         }
         case "manage_pushlist": {
-            const pushListText = settings?.globalMailPushList?.length 
-                ? settings.globalMailPushList.map(id => `• ${id}`).join('\n')
-                : 'No users in push list';
+            // Get all users from KV (stored as tg:chat:userId)
+            const chatKeys = await c.env.KV.list({ prefix: "tg:chat:" });
+            const userIds = [];
+            
+            for (const key of chatKeys.keys) {
+                const chat = await c.env.KV.get(key.name, "json") as any;
+                if (chat && chat.type === 'private') {
+                    const userId = key.name.replace('tg:chat:', '');
+                    userIds.push(userId);
+                }
+            }
+            
+            const currentPushList = settings?.globalMailPushList || [];
+            
+            // Build buttons for users
+            const userButtons = userIds.map(id => {
+                const isInList = currentPushList.includes(id);
+                return [Markup.button.callback(
+                    `${isInList ? '✅' : '☐'} User ${id}`,
+                    `setting_pushlist_toggle_${id}`
+                )];
+            });
+            
             await ctx.editMessageText(
-                `📧 Global Mail Push List (${settings?.globalMailPushList?.length || 0} users)\n\n${pushListText}\n\n`
-                + `💡 Use the web admin panel to add/remove users`,
+                `📧 Global Mail Push List\n\n`
+                + `Current: ${currentPushList.length} users\n\n`
+                + `Select users to add or remove:\n`
+                + `(✅ = enabled, ☐ = disabled)`,
                 Markup.inlineKeyboard([
+                    ...userButtons,
                     [Markup.button.callback('⬅️ Back to Settings', 'admin_settings')]
                 ])
             );
             break;
         }
+    }
+    
+    // Handle pushlist toggle (starts with "pushlist_toggle_")
+    if (action.startsWith("pushlist_toggle_")) {
+        const chatId = action.replace("pushlist_toggle_", "");
+        const currentList = settings?.globalMailPushList || [];
+        
+        if (currentList.includes(chatId)) {
+            // Remove from list
+            settings.globalMailPushList = currentList.filter(id => id !== chatId);
+        } else {
+            // Add to list
+            settings.globalMailPushList = [...currentList, chatId];
+        }
+        
+        await c.env.KV.put(CONSTANTS.TG_KV_SETTINGS_KEY, JSON.stringify(settings));
+        
+        // Refresh the manage_pushlist view
+        await handleSettingCallbacks(ctx, c, "setting_manage_pushlist");
+        return await ctx.answerCbQuery(`Updated push list`);
     }
     
     return await ctx.answerCbQuery();
