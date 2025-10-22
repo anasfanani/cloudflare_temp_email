@@ -3,6 +3,7 @@ import { Context as TgContext } from "telegraf";
 import { CONSTANTS } from "../../constants";
 import { TelegramSettings } from "../settings";
 import i18n from "../../i18n";
+import { SharedKV } from "../../shared-kv";
 
 export async function setupMiddleware(bot: any, c: Context<HonoCustomType>) {
     const lang = c.env.DEFAULT_LANG || "en";
@@ -16,7 +17,8 @@ export async function setupMiddleware(bot: any, c: Context<HonoCustomType>) {
             return await ctx.reply(t.unableGetUserInfo);
         }
 
-        const settings = await c.env.KV.get<TelegramSettings>(CONSTANTS.TG_KV_SETTINGS_KEY, "json");
+        const kv = new SharedKV(c);
+        const settings = await kv.get<TelegramSettings>(CONSTANTS.TG_KV_SETTINGS_KEY, "json");
         
         // Check if user is admin - admins always have access
         const isAdmin = settings?.adminList?.includes(userId.toString());
@@ -55,8 +57,9 @@ async function trackChatUsage(ctx: TgContext, c: Context<HonoCustomType>) {
         
         if (!chatId) return;
         
+        const kv = new SharedKV(c);
         const key = `tg:chat:${chatId}`;
-        const existing = await c.env.KV.get(key, "json") as any || {};
+        const existing = await kv.get(key, "json") as any || {};
         
         const now = new Date().toISOString();
         const messageCount = (existing.message_count || 0) + 1;
@@ -94,7 +97,7 @@ async function trackChatUsage(ctx: TgContext, c: Context<HonoCustomType>) {
                 }
             }
             
-            await c.env.KV.put(key, JSON.stringify(chatData));
+            await kv.put(key, JSON.stringify(chatData));
         }
     } catch (e) {
         console.error(`Failed to track chat: ${e}`);

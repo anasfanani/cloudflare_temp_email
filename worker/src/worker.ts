@@ -9,6 +9,7 @@ import { api as userApi } from './user_api';
 import { api as adminApi } from './admin_api';
 import { api as apiSendMail } from './mails_api/send_mail_api'
 import { api as telegramApi } from './telegram_api'
+import { api as kvApi } from './kv_api'
 
 import i18n from './i18n';
 import { email } from './email';
@@ -128,6 +129,11 @@ const checkoutUserRolePayload = async (
 
 // api auth
 app.use('/api/*', async (c, next) => {
+	// Skip auth for KV API (it has its own x-custom-auth check)
+	if (c.req.path.startsWith("/api/kv/")) {
+		return await next();
+	}
+	
 	// check header x-custom-auth
 	const passwords = getPasswords(c);
 	if (passwords && passwords.length > 0) {
@@ -255,6 +261,7 @@ app.route('/', userApi)
 app.route('/', adminApi)
 app.route('/', apiSendMail)
 app.route('/', telegramApi)
+app.route('/', kvApi)
 
 const health_check = async (c: Context<HonoCustomType>) => {
 	const lang = c.req.raw.headers.get("x-lang") || c.env.DEFAULT_LANG;

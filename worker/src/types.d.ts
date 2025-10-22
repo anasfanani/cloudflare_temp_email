@@ -84,6 +84,9 @@ type Bindings = {
     TG_MAX_ADDRESS: number | undefined
     TG_BOT_INFO: string | object | undefined
 
+    // Shared KV config for multi-account setup
+    BACKEND_URL: string | undefined
+
     // webhook config
     FRONTEND_URL: string | undefined
 }

@@ -1,5 +1,6 @@
 import { Context } from "hono";
 import { CONSTANTS } from "../constants";
+import { SharedKV } from "../shared-kv";
 
 export class TelegramSettings {
     enableAllowList: boolean;
@@ -24,14 +25,16 @@ export class TelegramSettings {
 }
 
 async function getTelegramSettings(c: Context<HonoCustomType>): Promise<Response> {
-    const settings = await c.env.KV.get<TelegramSettings>(CONSTANTS.TG_KV_SETTINGS_KEY, "json");
+    const kv = new SharedKV(c);
+    const settings = await kv.get<TelegramSettings>(CONSTANTS.TG_KV_SETTINGS_KEY, "json");
     return c.json(settings || new TelegramSettings(false, [], "", false, [], []));
 }
 
 
 async function saveTelegramSettings(c: Context<HonoCustomType>): Promise<Response> {
+    const kv = new SharedKV(c);
     const settings = await c.req.json<TelegramSettings>();
-    await c.env.KV.put(CONSTANTS.TG_KV_SETTINGS_KEY, JSON.stringify(settings));
+    await kv.put(CONSTANTS.TG_KV_SETTINGS_KEY, JSON.stringify(settings));
     return c.json({ success: true })
 }
 

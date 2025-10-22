@@ -4,12 +4,14 @@ import { CONSTANTS } from "../constants";
 import { getBooleanValue, getIntValue, getJsonSetting } from "../utils";
 import { deleteAddressWithData, newAddress, generateRandomName } from "../common";
 import i18n from "../i18n";
+import { SharedKV } from "../shared-kv";
 
 export const tgUserNewAddress = async (
     c: Context<HonoCustomType>, userId: string, address: string
 ): Promise<{ address: string, jwt: string, password?: string | null }> => {
     const lang = c.env.DEFAULT_LANG || "en";
     const t = i18n.getTelegramMessages(lang);
+    const kv = new SharedKV(c);
     
     if (c.env.RATE_LIMITER) {
         const { success } = await c.env.RATE_LIMITER.limit(
@@ -25,7 +27,7 @@ export const tgUserNewAddress = async (
     // Parse address parameter - handle empty or whitespace-only address
     const trimmedAddress = address ? address.trim() : "";
     const [name, domain] = trimmedAddress.includes("@") ? trimmedAddress.split("@") : [trimmedAddress, null];
-    const jwtList = await c.env.KV.get<string[]>(`${CONSTANTS.TG_KV_PREFIX}:${userId}`, 'json') || [];
+    const jwtList = await kv.get<string[]>(`${CONSTANTS.TG_KV_PREFIX}:${userId}`, 'json') || [];
     if (jwtList.length >= getIntValue(c.env.TG_MAX_ADDRESS, 5)) {
         throw Error(t.addressLimitReached);
     }
@@ -45,8 +47,8 @@ export const tgUserNewAddress = async (
         enablePrefix: true
     });
     // for mail push to telegram
-    await c.env.KV.put(`${CONSTANTS.TG_KV_PREFIX}:${userId}`, JSON.stringify([...jwtList, res.jwt]));
-    await c.env.KV.put(`${CONSTANTS.TG_KV_PREFIX}:${res.address}`, userId.toString());
+    await kv.put(`${CONSTANTS.TG_KV_PREFIX}:${userId}`, JSON.stringify([...jwtList, res.jwt]));
+    await kv.put(`${CONSTANTS.TG_KV_PREFIX}:${res.address}`, userId.toString());
     return res;
 }
 
@@ -88,11 +90,12 @@ export const bindTelegramAddress = async (
 ): Promise<string> => {
     const lang = c.env.DEFAULT_LANG || "en";
     const t = i18n.getTelegramMessages(lang);
+    const kv = new SharedKV(c);
     const { address } = await Jwt.verify(jwt, c.env.JWT_SECRET, "HS256");
     if (!address) {
         throw Error(t.invalidCredential);
     }
-    const jwtList = await c.env.KV.get<string[]>(`${CONSTANTS.TG_KV_PREFIX}:${userId}`, 'json') || [];
+    const jwtList = await kv.get<string[]>(`${CONSTANTS.TG_KV_PREFIX}:${userId}`, 'json') || [];
     const { addressIdMap } = await jwtListToAddressData(c, jwtList);
     if (address as string in addressIdMap) {
         return address as string;
@@ -100,16 +103,17 @@ export const bindTelegramAddress = async (
     if (jwtList.length >= getIntValue(c.env.TG_MAX_ADDRESS, 5)) {
         throw Error(t.addressLimitReachedClean);
     }
-    await c.env.KV.put(`${CONSTANTS.TG_KV_PREFIX}:${userId}`, JSON.stringify([...jwtList, jwt]));
+    await kv.put(`${CONSTANTS.TG_KV_PREFIX}:${userId}`, JSON.stringify([...jwtList, jwt]));
     // for mail push to telegram
-    await c.env.KV.put(`${CONSTANTS.TG_KV_PREFIX}:${address}`, userId.toString());
+    await kv.put(`${CONSTANTS.TG_KV_PREFIX}:${address}`, userId.toString());
     return address as string;
 }
 
 export const unbindTelegramAddress = async (
     c: Context<HonoCustomType>, userId: string, address: string
 ): Promise<boolean> => {
-    const jwtList = await c.env.KV.get<string[]>(`${CONSTANTS.TG_KV_PREFIX}:${userId}`, 'json') || [];
+    const kv = new SharedKV(c);
+    const jwtList = await kv.get<string[]>(`${CONSTANTS.TG_KV_PREFIX}:${userId}`, 'json') || [];
     const newJwtList = [];
     for (const jwt of jwtList) {
         try {
@@ -124,16 +128,17 @@ export const unbindTelegramAddress = async (
         }
         newJwtList.push(jwt);
     }
-    await c.env.KV.put(`${CONSTANTS.TG_KV_PREFIX}:${userId}`, JSON.stringify(newJwtList));
-    await c.env.KV.delete(`${CONSTANTS.TG_KV_PREFIX}:${address}`);
+    await kv.put(`${CONSTANTS.TG_KV_PREFIX}:${userId}`, JSON.stringify(newJwtList));
+    await kv.delete(`${CONSTANTS.TG_KV_PREFIX}:${address}`);
     return true;
 }
 
 export const unbindTelegramByAddress = async (
     c: Context<HonoCustomType>, address: string
 ): Promise<boolean> => {
-    if (!c.env.KV) return true;
-    const userId = await c.env.KV.get<string>(`${CONSTANTS.TG_KV_PREFIX}:${address}`)
+    if (!c.env.KV && !c.env.BACKEND_URL) return true;
+    const kv = new SharedKV(c);
+    const userId = await kv.get<string>(`${CONSTANTS.TG_KV_PREFIX}:${address}`)
     if (userId) {
         return await unbindTelegramAddress(c, userId, address);
     }

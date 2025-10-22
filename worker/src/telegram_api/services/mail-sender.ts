@@ -4,6 +4,7 @@ import { CONSTANTS } from "../../constants";
 import { TelegramSettings } from "../settings";
 import { parseMail } from "./mail-parser";
 import i18n from "../../i18n";
+import { SharedKV } from "../../shared-kv";
 
 export async function sendMailToTelegram(
     c: Context<HonoCustomType>, 
@@ -12,13 +13,18 @@ export async function sendMailToTelegram(
     message_id: string | null,
     bot: any
 ) {
-    if (!c.env.TELEGRAM_BOT_TOKEN || !c.env.KV) {
-        console.log("sendMailToTelegram: Missing TELEGRAM_BOT_TOKEN or KV");
+    if (!c.env.TELEGRAM_BOT_TOKEN) {
+        console.log("sendMailToTelegram: Missing TELEGRAM_BOT_TOKEN");
+        return;
+    }
+    if (!c.env.KV && !c.env.BACKEND_URL) {
+        console.log("sendMailToTelegram: Missing KV or BACKEND_URL");
         return;
     }
     const lang = c.env.DEFAULT_LANG || "en";
     const t = i18n.getTelegramMessages(lang);
-    const userId = await c.env.KV.get(`${CONSTANTS.TG_KV_PREFIX}:${address}`);
+    const kv = new SharedKV(c);
+    const userId = await kv.get(`${CONSTANTS.TG_KV_PREFIX}:${address}`);
     console.log(`sendMailToTelegram: address=${address}, userId=${userId}`);
     
     const { mail } = await parseMail(parsedEmailContext, address, new Date().toUTCString(), lang, c);
@@ -27,7 +33,7 @@ export async function sendMailToTelegram(
         return;
     }
     
-    const settings = await c.env.KV.get<TelegramSettings>(CONSTANTS.TG_KV_SETTINGS_KEY, "json");
+    const settings = await kv.get<TelegramSettings>(CONSTANTS.TG_KV_SETTINGS_KEY, "json");
     const globalPush = settings?.enableGlobalMailPush && settings?.globalMailPushList && settings.globalMailPushList.length > 0;
     console.log(`sendMailToTelegram: enableGlobalMailPush=${settings?.enableGlobalMailPush}, pushListLength=${settings?.globalMailPushList?.length}, globalPush=${globalPush}`);
     
